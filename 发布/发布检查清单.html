@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公众号发布检查清单</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-3xl mx-auto p-4 md:p-6">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl md:text-3xl font-bold mb-2">公众号发布检查清单</h1>
+      <p class="text-gray-500">发布前逐项检查，避免常见错误</p>
+    </div>
+
+    <!-- 主面板/历史面板切换 -->
+    <div class="flex gap-2 mb-4">
+      <button id="tabMain" onclick="switchTab('main')" class="flex-1 px-3 py-2 bg-blue-500 text-white rounded text-sm font-medium"><i class="fa fa-list"></i> 检查清单</button>
+      <button id="tabHistory" onclick="switchTab('history')" class="flex-1 px-3 py-2 bg-gray-200 rounded text-sm font-medium"><i class="fa fa-history"></i> 历史记录</button>
+    </div>
+
+    <!-- 主面板 -->
+    <div id="panelMain">
+      <!-- 进度条 -->
+      <div class="bg-white rounded-lg shadow p-4 mb-4">
+        <div class="flex justify-between text-sm mb-2">
+          <span id="completedText">已检查 0/0</span>
+          <span id="percentText">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div id="progressBar" class="bg-blue-500 h-3 rounded-full transition-all" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex gap-2 mb-6 flex-wrap">
+        <button onclick="resetAll()" class="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600">
+          <i class="fa fa-refresh"></i> 重置
+        </button>
+        <button onclick="exportResult()" class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600">
+          <i class="fa fa-download"></i> 导出结果
+        </button>
+        <button onclick="toggleAll(true)" class="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600">
+          <i class="fa fa-check-square-o"></i> 全部完成
+        </button>
+        <button onclick="saveSnapshot()" class="bg-purple-500 text-white px-4 py-2 rounded text-sm hover:bg-purple-600">
+          <i class="fa fa-camera"></i> 保存快照
+        </button>
+      </div>
+
+      <!-- 时间段选择 -->
+      <div class="bg-white rounded-lg shadow p-4 mb-4">
+        <div class="flex items-center gap-4">
+          <label class="text-sm font-medium">文章类型：</label>
+          <select id="articleType" class="border rounded px-3 py-1 text-sm">
+            <option>原创文章</option>
+            <option>转载文章</option>
+            <option>推广文案</option>
+            <option>活动通知</option>
+          </select>
+          <label class="text-sm font-medium ml-4">发布渠道：</label>
+          <select id="channel" class="border rounded px-3 py-1 text-sm">
+            <option>公众号</option>
+            <option>公众号+视频号</option>
+            <option>全平台发布</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 自定义检查项区 -->
+      <div class="bg-white rounded-lg shadow p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-sm"><i class="fa fa-plus-circle text-green-500"></i> 自定义检查项</h3>
+          <button onclick="document.getElementById('customForm').classList.toggle('hidden')" class="text-xs text-blue-500 hover:text-blue-700"><i class="fa fa-plus"></i> 添加</button>
+        </div>
+        <div id="customForm" class="hidden bg-gray-50 rounded p-3 mb-3">
+          <div class="flex gap-2 mb-2">
+            <input id="customInput" class="flex-1 border rounded px-3 py-2 text-sm" placeholder="输入自定义检查项...">
+            <select id="customSection" class="border rounded px-3 py-2 text-sm w-32">
+              <option value="一、内容检查">内容检查</option>
+              <option value="二、图片检查">图片检查</option>
+              <option value="三、排版检查">排版检查</option>
+              <option value="四、合规检查">合规检查</option>
+              <option value="五、功能检查">功能检查</option>
+              <option value="六、发布信息">发布信息</option>
+              <option value="自定义">自定义</option>
+            </select>
+          </div>
+          <button onclick="addCustomItem()" class="bg-green-500 text-white px-4 py-1.5 rounded text-sm hover:bg-green-600"><i class="fa fa-check"></i> 添加</button>
+        </div>
+        <div id="customItemsList" class="space-y-1"></div>
+      </div>
+
+      <!-- 检查项容器 -->
+      <div id="checklist"></div>
+    </div>
+
+    <!-- 历史面板 -->
+    <div id="panelHistory" class="hidden">
+      <div class="bg-white rounded-lg shadow p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold"><i class="fa fa-history text-purple-500"></i> 检查历史记录</h3>
+          <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-700"><i class="fa fa-trash"></i> 清空历史</button>
+        </div>
+        <div id="historyList" class="space-y-3"></div>
+      </div>
+      <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="font-bold mb-3"><i class="fa fa-line-chart text-blue-500"></i> 完成率趋势</h3>
+        <div id="trendChart" class="flex items-end gap-2 min-h-[120px]"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sections = [
+      {
+        title: '一、内容检查',
+        icon: 'fa-pencil-square-o',
+        items: [
+          '标题简洁有力（不超过20字）', '标题不含敏感词', '标题与内容一致',
+          '无错别字和语法错误', '数据来源已标注', '人名地名拼写正确', '引用内容注明出处',
+          '数据准确性已核实', '案例真实性已确认', '新闻时效性已检查'
+        ]
+      },
+      {
+        title: '二、图片检查',
+        icon: 'fa-image',
+        items: [
+          '封面尺寸正确（900×383px）', '封面图清晰无水印', '封面与内容相关', '封面不含敏感内容',
+          '正文图片不超过10张', '每张图片有说明', '图片版权合规', '图片加载测试正常'
+        ]
+      },
+      {
+        title: '三、排版检查',
+        icon: 'fa-font',
+        items: [
+          '字号行距一致', '颜色不超过3种', '段间距适当', '标题层级清晰',
+          '手机预览效果正常', '不同手机型号测试', '图片显示正常', '长按复制测试'
+        ]
+      },
+      {
+        title: '四、合规检查',
+        icon: 'fa-shield',
+        items: [
+          '无政治敏感内容', '无违规广告用语', '无虚假宣传内容', '无侵权内容',
+          '图片来源合法', '文字引用注明出处', '转载已获授权'
+        ]
+      },
+      {
+        title: '五、功能检查',
+        icon: 'fa-cogs',
+        items: [
+          '外链跳转正常', '阅读原文链接正确', '二维码可扫描',
+          '评论设置正确', '原文链接设置', '封面摘要填写'
+        ]
+      },
+      {
+        title: '六、发布信息',
+        icon: 'fa-send-o',
+        items: [
+          '摘要简洁（不超过50字）', '摘要与标题呼应', '摘要吸引点击',
+          '文章分类正确', '标签设置合理'
+        ]
+      },
+      {
+        title: '七、发布后检查',
+        icon: 'fa-check-circle-o',
+        items: [
+          '手机端阅读体验', '分享功能测试', '评论功能测试', '数据正常显示'
+        ]
+      },
+      {
+        title: '八、SEO检查',
+        icon: 'fa-search',
+        items: [
+          '标题包含关键词', '关键词密度合理', '摘要吸引点击', '文章标签完整', '内部链接设置', '封面图带描述'
+        ]
+      },
+      {
+        title: '九、数据分析',
+        icon: 'fa-line-chart',
+        items: [
+          '预估阅读率', '转化率检查', '分享率预估', '粉丝增长预期', '热点话题关联度'
+        ]
+      }
+    ];
+
+    const storageKey = 'wechat_checklist_state';
+    const customKey = 'wechat_checklist_custom';
+    const historyKey = 'wechat_checklist_history';
+
+    let customItems = JSON.parse(localStorage.getItem(customKey) || '[]');
+
+    function buildChecklist() {
+      const container = document.getElementById('checklist');
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      container.innerHTML = '';
+
+      // 合并自定义项到 sections
+      const allSections = JSON.parse(JSON.stringify(sections));
+      const customGrouped = {};
+      customItems.forEach((item, idx) => {
+        const sec = item.section || '自定义';
+        if (!customGrouped[sec]) customGrouped[sec] = [];
+        customGrouped[sec].push({ text: item.text, customKey: `custom_${idx}` });
+      });
+      Object.keys(customGrouped).forEach(secTitle => {
+        const existing = allSections.find(s => s.title.includes(secTitle) || secTitle.includes(s.title));
+        if (existing) {
+          customGrouped[secTitle].forEach(ci => existing.items.push(ci.text));
+        } else {
+          allSections.push({
+            title: secTitle,
+            icon: 'fa-puzzle-piece',
+            items: customGrouped[secTitle].map(ci => ci.text)
+          });
+        }
+      });
+
+      allSections.forEach((section, si) => {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow mb-4 overflow-hidden';
+
+        const header = document.createElement('div');
+        header.className = 'bg-gray-100 px-4 py-3 font-bold flex items-center gap-2';
+        header.innerHTML = `<i class="fa ${section.icon} text-blue-500"></i> ${section.title} <span id="count_${si}" class="text-sm font-normal text-gray-500 ml-auto"></span>`;
+        div.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'p-2';
+
+        section.items.forEach((item, ii) => {
+          const key = `${si}_${ii}`;
+          const checked = saved[key] || false;
+          const label = document.createElement('label');
+          label.className = `flex items-start gap-3 p-2 rounded cursor-pointer hover:bg-gray-50 transition ${checked ? 'opacity-60' : ''}`;
+
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = checked;
+          input.className = 'mt-0.5 h-4 w-4 text-blue-500 rounded';
+          input.onchange = () => { saveState(key, input.checked); };
+
+          const text = document.createElement('span');
+          text.className = `text-sm ${checked ? 'line-through text-gray-400' : 'text-gray-700'}`;
+          text.textContent = `${ii + 1}. ${item}`;
+
+          label.appendChild(input);
+          label.appendChild(text);
+          body.appendChild(label);
+        });
+
+        div.appendChild(body);
+        container.appendChild(div);
+      });
+
+      updateProgress();
+    }
+
+    function saveState(key, val) {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      saved[key] = val;
+      localStorage.setItem(storageKey, JSON.stringify(saved));
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const allSections = getEffectiveSections();
+      let total = 0, done = 0;
+      allSections.forEach((section, si) => {
+        section.items.forEach((_, ii) => {
+          total++;
+          if (saved[`${si}_${ii}`]) done++;
+        });
+      });
+
+      const pct = total > 0 ? Math.round(done / total * 100) : 0;
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('completedText').textContent = `已检查 ${done}/${total}`;
+      document.getElementById('percentText').textContent = pct + '%';
+
+      allSections.forEach((section, si) => {
+        let sectionDone = 0;
+        section.items.forEach((_, ii) => {
+          if (saved[`${si}_${ii}`]) sectionDone++;
+        });
+        const el = document.getElementById(`count_${si}`);
+        if (el) el.textContent = `${sectionDone}/${section.items.length}`;
+      });
+    }
+
+    function getEffectiveSections() {
+      const allSections = JSON.parse(JSON.stringify(sections));
+      const customGrouped = {};
+      customItems.forEach((item, idx) => {
+        const sec = item.section || '自定义';
+        if (!customGrouped[sec]) customGrouped[sec] = [];
+        customGrouped[sec].push(item.text);
+      });
+      Object.keys(customGrouped).forEach(secTitle => {
+        const existing = allSections.find(s => s.title.includes(secTitle) || secTitle.includes(s.title));
+        if (existing) {
+          customGrouped[secTitle].forEach(t => existing.items.push(t));
+        } else {
+          allSections.push({ title: secTitle, icon: 'fa-puzzle-piece', items: customGrouped[secTitle] });
+        }
+      });
+      return allSections;
+    }
+
+    function resetAll() {
+      if (confirm('确认重置所有检查项？')) {
+        localStorage.removeItem(storageKey);
+        buildChecklist();
+      }
+    }
+
+    function toggleAll(val) {
+      const saved = {};
+      getEffectiveSections().forEach((section, si) => {
+        section.items.forEach((_, ii) => {
+          saved[`${si}_${ii}`] = val;
+        });
+      });
+      localStorage.setItem(storageKey, JSON.stringify(saved));
+      buildChecklist();
+    }
+
+    // ===== 自定义检查项 =====
+    function addCustomItem() {
+      const input = document.getElementById('customInput');
+      const section = document.getElementById('customSection').value;
+      if (!input.value.trim()) { alert('请输入检查项'); return; }
+      customItems.push({ text: input.value.trim(), section: section });
+      localStorage.setItem(customKey, JSON.stringify(customItems));
+      input.value = '';
+      document.getElementById('customForm').classList.add('hidden');
+      renderCustomItems();
+      buildChecklist();
+    }
+
+    function removeCustomItem(idx) {
+      customItems.splice(idx, 1);
+      localStorage.setItem(customKey, JSON.stringify(customItems));
+      renderCustomItems();
+      buildChecklist();
+    }
+
+    function renderCustomItems() {
+      const container = document.getElementById('customItemsList');
+      if (customItems.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-400 text-center py-2">暂无自定义检查项</p>';
+        return;
+      }
+      container.innerHTML = customItems.map((item, idx) =>
+        `<div class="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+          <span class="text-sm text-gray-600"><span class="text-xs text-blue-400 mr-1">[${item.section}]</span>${item.text}</span>
+          <button onclick="removeCustomItem(${idx})" class="text-red-400 hover:text-red-600 text-xs"><i class="fa fa-times"></i></button>
+        </div>`
+      ).join('');
+    }
+
+    // ===== 快照保存（历史记录） =====
+    function saveSnapshot() {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const allSections = getEffectiveSections();
+      let total = 0, done = 0;
+      allSections.forEach((section, si) => {
+        section.items.forEach((_, ii) => {
+          total++;
+          if (saved[`${si}_${ii}`]) done++;
+        });
+      });
+      const pct = total > 0 ? Math.round(done / total * 100) : 0;
+      const snapshot = {
+        time: new Date().toLocaleString(),
+        done: done,
+        total: total,
+        pct: pct,
+        articleType: document.getElementById('articleType').value,
+        channel: document.getElementById('channel').value
+      };
+      const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+      history.push(snapshot);
+      localStorage.setItem(historyKey, JSON.stringify(history));
+      alert('快照已保存');
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+      const container = document.getElementById('historyList');
+      if (history.length === 0) {
+        container.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa fa-inbox text-3xl block mb-2"></i>暂无历史记录<br><span class="text-xs">完成检查后点击「保存快照」</span></p>';
+        document.getElementById('trendChart').innerHTML = '<p class="text-center py-6 text-gray-400 text-sm">暂无数据</p>';
+        return;
+      }
+      container.innerHTML = history.slice().reverse().map((h, i) =>
+        `<div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-100">
+          <div>
+            <div class="text-sm font-medium text-gray-700">${h.time}</div>
+            <div class="text-xs text-gray-400 mt-1">${h.articleType} · ${h.channel}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-lg font-bold ${h.pct >= 80 ? 'text-green-500' : h.pct >= 50 ? 'text-yellow-500' : 'text-red-500'}">${h.pct}%</div>
+            <div class="text-xs text-gray-400">${h.done}/${h.total}</div>
+          </div>
+        </div>`
+      ).join('');
+      renderTrendChart(history);
+    }
+
+    function renderTrendChart(history) {
+      const chart = document.getElementById('trendChart');
+      if (history.length === 0) return;
+      const maxPct = Math.max(...history.map(h => h.pct), 100);
+      chart.innerHTML = history.map((h, i) => {
+        const height = Math.max(20, (h.pct / maxPct) * 100);
+        return `<div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full bg-blue-100 rounded-t" style="height:${height}px;min-height:20px;" title="${h.time}: ${h.pct}%">
+            <div class="bg-blue-500 rounded-t h-full" style="height:${h.pct}%;min-height:4px;"></div>
+          </div>
+          <span class="text-xs text-gray-400 truncate w-full text-center" style="font-size:9px;">${h.time.slice(5, 10)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function clearHistory() {
+      if (confirm('确认清空所有历史记录？')) {
+        localStorage.removeItem(historyKey);
+        renderHistory();
+      }
+    }
+
+    // ===== 面板切换 =====
+    function switchTab(tab) {
+      if (tab === 'main') {
+        document.getElementById('panelMain').classList.remove('hidden');
+        document.getElementById('panelHistory').classList.add('hidden');
+        document.getElementById('tabMain').className = 'flex-1 px-3 py-2 bg-blue-500 text-white rounded text-sm font-medium';
+        document.getElementById('tabHistory').className = 'flex-1 px-3 py-2 bg-gray-200 rounded text-sm font-medium';
+      } else {
+        document.getElementById('panelMain').classList.add('hidden');
+        document.getElementById('panelHistory').classList.remove('hidden');
+        document.getElementById('tabHistory').className = 'flex-1 px-3 py-2 bg-blue-500 text-white rounded text-sm font-medium';
+        document.getElementById('tabMain').className = 'flex-1 px-3 py-2 bg-gray-200 rounded text-sm font-medium';
+        renderHistory();
+      }
+    }
+
+    // ===== 导出 =====
+    function exportResult() {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const type = document.getElementById('articleType').value;
+      const channel = document.getElementById('channel').value;
+      const allSections = getEffectiveSections();
+      let text = `【公众号发布检查报告】\n`;
+      text += `文章类型：${type}\n发布渠道：${channel}\n时间：${new Date().toLocaleString()}\n\n`;
+
+      allSections.forEach((section, si) => {
+        text += `${section.title}\n`;
+        section.items.forEach((item, ii) => {
+          const done = saved[`${si}_${ii}`] || false;
+          text += `  ${done ? '✅' : '⬜'} ${item}\n`;
+        });
+        text += '\n';
+      });
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => alert('检查报告已复制到剪贴板')).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('检查报告已复制到剪贴板');
+    }
+
+    // 初始化
+    renderCustomItems();
+    buildChecklist();
+  </script>
+</body>
+</html>

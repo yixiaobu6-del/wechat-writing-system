@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公众号排版样式库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E88E5',
+                        'primary-dark': '#1565C0',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 原始排版样式 - 用于预览 */
+        .preview-article-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333333;
+            line-height: 1.5;
+            text-align: center;
+        }
+        .preview-section-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #333333;
+            line-height: 1.5;
+            padding-left: 10px;
+            border-left: 3px solid #1E88E5;
+        }
+        .preview-sub-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333333;
+            line-height: 1.5;
+        }
+        .preview-paragraph {
+            font-size: 16px;
+            color: #3e3e3e;
+            line-height: 1.75;
+            text-align: justify;
+        }
+        .preview-quote {
+            font-size: 14px;
+            color: #888888;
+            line-height: 1.6;
+            padding: 10px 15px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .preview-highlight {
+            color: #1E88E5;
+            font-weight: bold;
+        }
+        .preview-golden-quote {
+            font-size: 16px;
+            color: #333333;
+            line-height: 1.5;
+            text-align: center;
+            padding: 20px;
+            background-color: #f0f7ff;
+            border-radius: 4px;
+        }
+        .preview-list-item {
+            font-size: 16px;
+            color: #3e3e3e;
+            line-height: 1.75;
+            padding-left: 20px;
+            position: relative;
+        }
+        .preview-list-item::before {
+            content: "•";
+            color: #1E88E5;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        .preview-numbered-item {
+            font-size: 16px;
+            color: #3e3e3e;
+            line-height: 1.75;
+            padding-left: 25px;
+            position: relative;
+        }
+        .preview-divider {
+            height: 1px;
+            background-color: #eeeeee;
+        }
+        .preview-article-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .preview-article-table th {
+            background-color: #1E88E5;
+            color: #ffffff;
+            font-size: 14px;
+            padding: 10px;
+            text-align: center;
+        }
+        .preview-article-table td {
+            font-size: 14px;
+            color: #3e3e3e;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .preview-author-info {
+            font-size: 14px;
+            color: #888888;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+        }
+
+        /* Tooltip样式 */
+        .tooltip {
+            position: relative;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.3s;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 复制成功提示 */
+        .copy-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Toast容器 -->
+    <div id="toast-container"></div>
+
+    <div class="max-w-6xl mx-auto p-4 md:p-6">
+        <!-- 头部 -->
+        <header class="text-center py-6 md:py-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+                <i class="fa fa-palette text-primary mr-2"></i>公众号排版样式库
+            </h1>
+            <p class="text-gray-500 mt-2 text-sm md:text-base">12种精选样式，一键复制，即插即用</p>
+        </header>
+
+        <!-- 工具栏 -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 sticky top-0 z-50 border">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <!-- 分类筛选 -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterStyles('all')" data-filter="all" class="filter-btn active px-3 py-1.5 rounded-full text-sm font-medium transition bg-primary text-white">
+                        全部
+                    </button>
+                    <button onclick="filterStyles('title')" data-filter="title" class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fa fa-header mr-1"></i>标题
+                    </button>
+                    <button onclick="filterStyles('content')" data-filter="content" class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fa fa-align-left mr-1"></i>正文
+                    </button>
+                    <button onclick="filterStyles('quote')" data-filter="quote" class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fa fa-quote-left mr-1"></i>引用
+                    </button>
+                    <button onclick="filterStyles('list')" data-filter="list" class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fa fa-list mr-1"></i>列表
+                    </button>
+                    <button onclick="filterStyles('other')" data-filter="other" class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fa fa-ellipsis-h mr-1"></i>其他
+                    </button>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex gap-2 mb-4">
+                    <button onclick="copyAllCSS()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition">
+                        <i class="fa fa-css3 mr-1"></i>复制全部CSS
+                    </button>
+                    <button onclick="copyAllHTML()" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition">
+                        <i class="fa fa-code mr-1"></i>复制全部HTML
+                    </button>
+                    <button onclick="openStyleCombiner()" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition">
+                        <i class="fa fa-magic mr-1"></i>样式组合器
+                    </button>
+                    <button onclick="openMobilePreview()" class="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 transition">
+                        <i class="fa fa-mobile mr-1"></i>手机预览
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 样式网格 -->
+        <div id="styles-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <!-- 样式卡片将通过JS动态生成 -->
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="mt-8 p-4 md:p-6 bg-blue-50 rounded-xl border border-blue-100">
+            <h3 class="font-bold text-blue-800 text-lg">
+                <i class="fa fa-lightbulb-o mr-2"></i>使用说明
+            </h3>
+            <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm text-blue-700">
+                <div>
+                    <h4 class="font-semibold mb-2">复制方式</h4>
+                    <ul class="space-y-1">
+                        <li><i class="fa fa-check text-green-500 mr-1"></i> 复制HTML：直接粘贴到公众号编辑器</li>
+                        <li><i class="fa fa-check text-green-500 mr-1"></i> 复制CSS：添加到自定义样式表</li>
+                        <li><i class="fa fa-check text-green-500 mr-1"></i> 一键复制全部样式代码</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2">排版建议</h4>
+                    <ul class="space-y-1">
+                        <li><i class="fa fa-check text-green-500 mr-1"></i> 正文段落不超过150字</li>
+                        <li><i class="fa fa-check text-green-500 mr-1"></i> 章节标题之间空两行</li>
+                        <li><i class="fa fa-check text-green-500 mr-1"></i> 金句用于核心观点强调</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 样式数据 -->
+    <script>
+    const styles = [
+        {
+            id: 'article-title',
+            name: '文章标题',
+            category: 'title',
+            description: '文章主标题，居中加粗，20px字号，适用于文章开头',
+            html: '<h1 class="article-title">这里是文章标题</h1>',
+            css: `.article-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333333;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    text-align: center;
+}`,
+            previewClass: 'preview-article-title',
+            previewHTML: '<h1 class="preview-article-title">这里是文章标题</h1>'
+        },
+        {
+            id: 'section-title',
+            name: '章节标题',
+            category: 'title',
+            description: '一级章节标题，左侧蓝色竖线作为视觉标识，17px加粗',
+            html: '<h2 class="section-title">一、第一章节标题</h2>',
+            css: `.section-title {
+    font-size: 17px;
+    font-weight: bold;
+    color: #333333;
+    line-height: 1.5;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding-left: 10px;
+    border-left: 3px solid #1E88E5;
+}`,
+            previewClass: 'preview-section-title',
+            previewHTML: '<h2 class="preview-section-title">一、第一章节标题</h2>'
+        },
+        {
+            id: 'sub-title',
+            name: '小节标题',
+            category: 'title',
+            description: '二级小节标题，16px加粗，与正文拉开层级',
+            html: '<h3 class="sub-title">1.1 小节标题</h3>',
+            css: `.sub-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333333;
+    line-height: 1.5;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}`,
+            previewClass: 'preview-sub-title',
+            previewHTML: '<h3 class="preview-sub-title">1.1 小节标题</h3>'
+        },
+        {
+            id: 'paragraph',
+            name: '正文段落',
+            category: 'content',
+            description: '正文内容，16px字号，1.75倍行距，两端对齐，配合高亮使用',
+            html: '<p class="paragraph">这里是正文内容，重点内容可以用<span class="highlight">蓝色高亮</span>来突出显示。</p>',
+            css: `.paragraph {
+    font-size: 16px;
+    color: #3e3e3e;
+    line-height: 1.75;
+    margin-bottom: 15px;
+    text-align: justify;
+}`,
+            previewClass: 'preview-paragraph',
+            previewHTML: '<p class="preview-paragraph">这里是正文内容，重点内容可以用<span class="preview-highlight">蓝色高亮</span>来突出显示。</p>'
+        },
+        {
+            id: 'highlight',
+            name: '高亮文字',
+            category: 'content',
+            description: '用于突出显示重点内容，蓝色加粗，配合正文使用',
+            html: '<span class="highlight">蓝色高亮文字</span>',
+            css: `.highlight {
+    color: #1E88E5;
+    font-weight: bold;
+}`,
+            previewClass: 'preview-highlight',
+            previewHTML: '<p class="preview-paragraph">普通文字中的<span class="preview-highlight">蓝色高亮文字</span>效果。</p>'
+        },
+        {
+            id: 'quote',
+            name: '引用块',
+            category: 'quote',
+            description: '引用内容，14px灰色字体，浅灰色背景，适合引用名言或他人观点',
+            html: '<div class="quote">这里是引用内容，适合引用名言、数据来源或他人观点。</div>',
+            css: `.quote {
+    font-size: 14px;
+    color: #888888;
+    line-height: 1.6;
+    padding: 10px 15px;
+    background-color: #f8f8f8;
+    border-radius: 4px;
+    margin: 15px 0;
+}`,
+            previewClass: 'preview-quote',
+            previewHTML: '<div class="preview-quote">这里是引用内容，适合引用名言、数据来源或他人观点。</div>'
+        },
+        {
+            id: 'golden-quote',
+            name: '金句样式',
+            category: 'quote',
+            description: '金句内容，居中显示，浅蓝色背景，用于核心观点强调',
+            html: '<div class="golden-quote">这里是金句内容，用于文章核心观点的突出展示。</div>',
+            css: `.golden-quote {
+    font-size: 16px;
+    color: #333333;
+    line-height: 1.5;
+    text-align: center;
+    padding: 20px;
+    background-color: #f0f7ff;
+    border-radius: 4px;
+    margin: 20px 0;
+}`,
+            previewClass: 'preview-golden-quote',
+            previewHTML: '<div class="preview-golden-quote">这里是金句内容，用于文章核心观点的突出展示。</div>'
+        },
+        {
+            id: 'list-item',
+            name: '无序列表',
+            category: 'list',
+            description: '列表项，使用蓝色圆点标记，适合展示要点清单',
+            html: `<div class="list-item">列表项一：每项使用蓝色圆点标记</div>
+<div class="list-item">列表项二：列表项之间间距适当</div>
+<div class="list-item">列表项三：适合展示要点清单</div>`,
+            css: `.list-item {
+    font-size: 16px;
+    color: #3e3e3e;
+    line-height: 1.75;
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+.list-item::before {
+    content: "•";
+    color: #1E88E5;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}`,
+            previewClass: 'preview-list-item',
+            previewHTML: `<div class="preview-list-item">列表项一：每项使用蓝色圆点标记</div>
+<div class="preview-list-item">列表项二：列表项之间间距适当</div>
+<div class="preview-list-item">列表项三：适合展示要点清单</div>`
+        },
+        {
+            id: 'numbered-item',
+            name: '有序列表',
+            category: 'list',
+            description: '编号列表，自动递增编号，适合步骤说明或流程清单',
+            html: `<div class="numbered-list">
+    <div class="numbered-item">第一步：描述具体操作</div>
+    <div class="numbered-item">第二步：描述具体操作</div>
+    <div class="numbered-item">第三步：描述具体操作</div>
+</div>`,
+            css: `.numbered-list {
+    counter-reset: list-counter;
+}
+.numbered-item {
+    counter-increment: list-counter;
+    font-size: 16px;
+    color: #3e3e3e;
+    line-height: 1.75;
+    margin-bottom: 10px;
+    padding-left: 25px;
+    position: relative;
+}
+.numbered-item::before {
+    content: counter(list-counter) ".";
+    color: #1E88E5;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}`,
+            previewClass: 'preview-numbered-item',
+            previewHTML: `<div style="counter-reset: list-counter;">
+<div class="preview-numbered-item" style="counter-increment: list-counter;">第一步：描述具体操作</div>
+<div class="preview-numbered-item" style="counter-increment: list-counter;">第二步：描述具体操作</div>
+<div class="preview-numbered-item" style="counter-increment: list-counter;">第三步：描述具体操作</div>
+</div>`
+        },
+        {
+            id: 'article-table',
+            name: '表格样式',
+            category: 'other',
+            description: '表格样式，蓝色表头，白色背景，适合展示对比数据',
+            html: `<table class="article-table">
+    <tr>
+        <th>项目</th>
+        <th>说明</th>
+        <th>备注</th>
+    </tr>
+    <tr>
+        <td>项目一</td>
+        <td>说明内容</td>
+        <td>备注信息</td>
+    </tr>
+    <tr>
+        <td>项目二</td>
+        <td>说明内容</td>
+        <td>备注信息</td>
+    </tr>
+</table>`,
+            css: `.article-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+.article-table th {
+    background-color: #1E88E5;
+    color: #ffffff;
+    font-size: 14px;
+    padding: 10px;
+    text-align: center;
+}
+.article-table td {
+    font-size: 14px;
+    color: #3e3e3e;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #eeeeee;
+}`,
+            previewClass: 'preview-article-table',
+            previewHTML: `<table class="preview-article-table">
+    <tr>
+        <th>项目</th>
+        <th>说明</th>
+        <th>备注</th>
+    </tr>
+    <tr>
+        <td>项目一</td>
+        <td>说明内容</td>
+        <td>备注信息</td>
+    </tr>
+    <tr>
+        <td>项目二</td>
+        <td>说明内容</td>
+        <td>备注信息</td>
+    </tr>
+</table>`
+        },
+        {
+            id: 'divider',
+            name: '分隔线',
+            category: 'other',
+            description: '灰色分隔线，用于章节之间的视觉分隔',
+            html: '<div class="divider"></div>',
+            css: `.divider {
+    height: 1px;
+    background-color: #eeeeee;
+    margin: 25px 0;
+}`,
+            previewClass: 'preview-divider',
+            previewHTML: '<div class="preview-divider"></div>'
+        },
+        {
+            id: 'author-info',
+            name: '作者信息',
+            category: 'other',
+            description: '文章末尾作者信息，居中灰色，适合标注来源和日期',
+            html: `<div class="author-info">
+    作者：作者名称<br>
+    来源：公众号名称<br>
+    发布日期：YYYY-MM-DD
+</div>`,
+            css: `.author-info {
+    font-size: 14px;
+    color: #888888;
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eeeeee;
+}`,
+            previewClass: 'preview-author-info',
+            previewHTML: `<div class="preview-author-info">
+    作者：作者名称<br>
+    来源：公众号名称<br>
+    发布日期：YYYY-MM-DD
+</div>`
+        }
+    ];
+
+    // 当前筛选状态
+    let currentFilter = localStorage.getItem('styleFilter') || 'all';
+
+    // 显示Toast提示
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'copy-toast';
+        toast.style.background = type === 'success' ? '#10b981' : '#ef4444';
+        toast.innerHTML = `<i class="fa fa-${type === 'success' ? 'check' : 'times'}-circle mr-2"></i>${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    }
+
+    // 复制到剪贴板
+    async function copyToClipboard(text, label) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(`已复制${label}`);
+        } catch (err) {
+            // 降级方案
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast(`已复制${label}`);
+        }
+    }
+
+    // 复制HTML代码
+    function copyHTML(id) {
+        const style = styles.find(s => s.id === id);
+        if (style) {
+            copyToClipboard(style.html, 'HTML代码');
+        }
+    }
+
+    // 复制CSS样式
+    function copyCSS(id) {
+        const style = styles.find(s => s.id === id);
+        if (style) {
+            copyToClipboard(style.css, 'CSS样式');
+        }
+    }
+
+    // 复制全部CSS
+    function copyAllCSS() {
+        const allCSS = styles.map(s => `/* ${s.name} */\n${s.css}`).join('\n\n');
+        copyToClipboard(allCSS, '全部CSS样式');
+    }
+
+    // 复制全部HTML
+    function copyAllHTML() {
+        const allHTML = styles.map(s => `<!-- ${s.name} -->\n${s.html}`).join('\n\n');
+        copyToClipboard(allHTML, '全部HTML代码');
+    }
+
+    // 筛选样式
+    function filterStyles(category) {
+        currentFilter = category;
+        localStorage.setItem('styleFilter', category);
+
+        // 更新按钮状态
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            if (btn.dataset.filter === category) {
+                btn.classList.remove('bg-gray-100', 'text-gray-600');
+                btn.classList.add('bg-primary', 'text-white');
+            } else {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            }
+        });
+
+        // 渲染卡片
+        renderStyles();
+    }
+
+    // 渲染样式卡片
+    function renderStyles() {
+        const grid = document.getElementById('styles-grid');
+        const filteredStyles = currentFilter === 'all'
+            ? styles
+            : styles.filter(s => s.category === currentFilter);
+
+        grid.innerHTML = filteredStyles.map(style => `
+            <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition overflow-hidden" data-category="${style.category}">
+                <!-- 卡片头部 -->
+                <div class="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg font-bold text-gray-800">${style.name}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${getCategoryBadgeClass(style.category)}">${getCategoryName(style.category)}</span>
+                    </div>
+                    <div class="tooltip">
+                        <i class="fa fa-question-circle text-gray-400 cursor-help"></i>
+                        <span class="tooltip-text">${style.description}</span>
+                    </div>
+                </div>
+
+                <!-- 预览区域 -->
+                <div class="p-4 md:p-6 bg-white min-h-[80px] flex items-center justify-center">
+                    ${style.previewHTML}
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="px-4 py-3 border-t bg-gray-50 flex gap-2">
+                    <button onclick="copyHTML('${style.id}')" class="flex-1 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition">
+                        <i class="fa fa-code mr-1"></i>复制HTML
+                    </button>
+                    <button onclick="copyCSS('${style.id}')" class="flex-1 py-2 bg-gray-600 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition">
+                        <i class="fa fa-css3 mr-1"></i>复制CSS
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 获取分类标签样式
+    function getCategoryBadgeClass(category) {
+        const classes = {
+            'title': 'bg-purple-100 text-purple-700',
+            'content': 'bg-blue-100 text-blue-700',
+            'quote': 'bg-green-100 text-green-700',
+            'list': 'bg-orange-100 text-orange-700',
+            'other': 'bg-gray-100 text-gray-700'
+        };
+        return classes[category] || 'bg-gray-100 text-gray-700';
+    }
+
+    // 获取分类名称
+    function getCategoryName(category) {
+        const names = {
+            'title': '标题',
+            'content': '正文',
+            'quote': '引用',
+            'list': '列表',
+            'other': '其他'
+        };
+        return names[category] || '其他';
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        // 恢复上次选择的筛选
+        filterStyles(currentFilter);
+    });
+
+    // ============================================================
+    // 样式组合器
+    // ============================================================
+    function openStyleCombiner() {
+        var modal = document.getElementById('styleCombinerModal');
+        if (!modal) {
+            // 创建模态框
+            modal = document.createElement('div');
+            modal.id = 'styleCombinerModal';
+            modal.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML =
+                '<div class="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[85vh] overflow-y-auto">' +
+                    '<div class="flex justify-between items-center mb-4">' +
+                        '<h3 class="text-lg font-bold text-gray-700"><i class="fa fa-magic text-purple-500 mr-1"></i>样式组合器</h3>' +
+                        '<button onclick="document.getElementById(\'styleCombinerModal\').classList.add(\'hidden\')" class="text-gray-400 hover:text-gray-600"><i class="fa fa-times"></i></button>' +
+                    '</div>' +
+                    '<div class="mb-4"><label class="block text-sm font-medium mb-2">选择要组合的样式</label>' +
+                    '<div id="styleCheckboxes" class="grid grid-cols-2 md:grid-cols-3 gap-2"></div></div>' +
+                    '<div class="mb-4"><label class="block text-sm font-medium mb-1">示例标题</label>' +
+                    '<input id="combinerTitle" class="w-full border rounded px-3 py-2" value="示例文章标题" placeholder="输入示例标题">' +
+                    '<textarea id="combinerContent" class="w-full border rounded px-3 py-2 mt-2 min-h-[100px]" placeholder="输入示例正文">这里是示例正文内容。重点内容可以用蓝色高亮来突出显示。适合展示要点清单。</textarea></div>' +
+                    '<button onclick="generateCombinedPreview()" class="w-full bg-purple-500 text-white py-2 rounded hover:bg-purple-600"><i class="fa fa-eye mr-1"></i>生成预览</button>' +
+                    '<div id="combinedPreview" class="mt-4 p-4 bg-gray-50 rounded min-h-[150px] border"></div>' +
+                    '<div class="mt-4 flex gap-2">' +
+                        '<button onclick="copyCombinedHTML()" class="flex-1 bg-blue-500 text-white py-2 rounded hover:bg-blue-600 text-sm"><i class="fa fa-copy mr-1"></i>复制HTML</button>' +
+                        '<button onclick="copyCombinedCSS()" class="flex-1 bg-green-500 text-white py-2 rounded hover:bg-green-600 text-sm"><i class="fa fa-css3 mr-1"></i>复制CSS</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(modal);
+        }
+        modal.classList.remove('hidden');
+
+        // 填充样式复选框
+        var checkboxContainer = document.getElementById('styleCheckboxes');
+        checkboxContainer.innerHTML = styles.map(function(s) {
+            return '<label class="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-purple-50 cursor-pointer text-sm">' +
+                '<input type="checkbox" class="style-checkbox" value="' + s.id + '" checked>' +
+                '<span>' + s.name + '</span>' +
+            '</label>';
+        }).join('');
+    }
+
+    var combinedStyles = [];
+
+    function generateCombinedPreview() {
+        combinedStyles = [];
+        var checkboxes = document.querySelectorAll('.style-checkbox:checked');
+        checkboxes.forEach(function(cb) { combinedStyles.push(cb.value); });
+
+        var title = document.getElementById('combinerTitle').value || '示例文章';
+        var content = document.getElementById('combinerContent').value || '示例正文内容';
+
+        // 根据选中样式生成预览
+        var previewEl = document.getElementById('combinedPreview');
+        var previewHTML = '';
+
+        combinedStyles.forEach(function(styleId) {
+            var s = styles.find(function(st) { return st.id === styleId; });
+            if (s) {
+                previewHTML += s.previewHTML.replace('这里是文章标题', title).replace('这里是金句内容', content.slice(0, 50)) + '\n';
+            }
+        });
+
+        previewEl.innerHTML = previewHTML;
+    }
+
+    function copyCombinedHTML() {
+        if (combinedStyles.length === 0) { showToast('请先生成预览'); return; }
+        var html = combinedStyles.map(function(id) {
+            var s = styles.find(function(st) { return st.id === id; });
+            return s ? s.html : '';
+        }).join('\n\n');
+        copyToClipboard(html, '组合HTML');
+    }
+
+    function copyCombinedCSS() {
+        if (combinedStyles.length === 0) { showToast('请先生成预览'); return; }
+        var css = combinedStyles.map(function(id) {
+            var s = styles.find(function(st) { return st.id === id; });
+            return s ? s.css : '';
+        }).join('\n\n');
+        copyToClipboard(css, '组合CSS');
+    }
+
+    // ============================================================
+    // 手机预览模式
+    // ============================================================
+    function openMobilePreview() {
+        var modal = document.getElementById('mobilePreviewModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'mobilePreviewModal';
+            modal.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML =
+                '<div class="bg-white rounded-xl p-6 max-w-sm w-full">' +
+                    '<div class="flex justify-between items-center mb-4">' +
+                        '<h3 class="text-lg font-bold text-gray-700"><i class="fa fa-mobile text-cyan-500 mr-1"></i>手机预览模式</h3>' +
+                        '<button onclick="document.getElementById(\'mobilePreviewModal\').classList.add(\'hidden\')" class="text-gray-400 hover:text-gray-600"><i class="fa fa-times"></i></button>' +
+                    '</div>' +
+                    '<div class="bg-gray-100 rounded-xl p-3 border-4 border-gray-300 shadow-lg">' +
+                        '<!-- 模拟公众号顶部 -->' +
+                        '<div class="bg-green-500 text-white text-center py-2 rounded text-sm font-medium mb-3">' +
+                            '<i class="fa fa-weixin mr-1"></i>公众号阅读模式' +
+                        '</div>' +
+                        '<!-- 模拟手机屏幕 -->' +
+                        '<div id="mobileContent" class="bg-white rounded p-4 min-h-[300px] max-h-[400px] overflow-y-auto text-sm leading-relaxed">' +
+                            '<p class="text-center font-bold text-lg mb-3">示例文章标题</p>' +
+                            '<p class="text-gray-600">这里是示例正文内容，模拟公众号阅读效果。</p>' +
+                            '<p class="text-gray-600 mt-2">重点内容可以用<span class="text-blue-500 font-bold">蓝色高亮</span>来突出显示。</p>' +
+                            '<div class="bg-blue-50 text-center p-3 rounded mt-3 text-gray-700">这里是金句内容，用于文章核心观点的突出展示。</div>' +
+                            '<div class="mt-3 text-gray-600"><span class="text-blue-500">•</span> 列表项一</div>' +
+                            '<div class="text-gray-600"><span class="text-blue-500">•</span> 列表项二</div>' +
+                        '</div>' +
+                        '<!-- 模拟底部操作栏 -->' +
+                        '<div class="flex justify-around mt-3 text-xs text-gray-500">' +
+                            '<span><i class="fa fa-heart-o"></i> 赞</span>' +
+                            '<span><i class="fa fa-comment-o"></i> 评论</span>' +
+                            '<span><i class="fa fa-share"></i> 分享</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="mt-4 text-xs text-gray-500 text-center">模拟iPhone屏幕尺寸，实际效果请在手机上验证</div>' +
+                '</div>';
+            document.body.appendChild(modal);
+        }
+        modal.classList.remove('hidden');
+
+        // 如果有样式组合器生成的预览，更新到手机预览
+        if (combinedStyles.length > 0) {
+            var previewHTML = combinedStyles.map(function(id) {
+                var s = styles.find(function(st) { return st.id === id; });
+                return s ? s.previewHTML : '';
+            }).join('\n');
+            document.getElementById('mobileContent').innerHTML = previewHTML;
+        }
+    }
+    </script>
+</body>
+</html>
